@@ -2,7 +2,7 @@
   "name": "agrispark",
   "version": "1.0.0",
   "description": "Smart Farming Assistant with Ph.D. Level Intelligence",
-  "main": "server.js",
+  "main": "api/index.js",
   "scripts": {
     "start": "node api/index.js",
     "dev": "nodemon api/index.js"
