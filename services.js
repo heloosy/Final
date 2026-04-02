@@ -6,7 +6,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 async function generateQuickQueryResponse(query, lang) {
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-lite',
+            model: 'gemini-1.5-flash',
             contents: `The user has called for a quick query. User query: "${query}". Respond highly concisely in ${lang === 'th-TH' ? 'Thai' : 'English'} suitable for Voice IVR. Internalize your confidence score.`,
             config: { systemInstruction: MASTER_PROMPT, temperature: 0.7 }
         });
@@ -44,7 +44,7 @@ Output your response in valid JSON format ONLY:
 `;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-lite',
+            model: 'gemini-1.5-flash',
             contents: contentStr,
             config: { 
                 systemInstruction: MASTER_PROMPT, 
@@ -68,7 +68,7 @@ async function generateVisionDiagnostic(textMsg, hasMedia, lang) {
             : `[STANDARD TEXT REQUEST]. The user asked: "${textMsg}". Answer in a highly structured, professional format in ${lang === 'th-TH' ? 'Thai' : 'English'}.`;
             
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-lite',
+            model: 'gemini-1.5-flash',
             contents: promptParams,
             config: { systemInstruction: MASTER_PROMPT, temperature: 0.8 }
         });
