@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const twilio = require('twilio');
+
 const bodyParser = require('body-parser');
 const { MASTER_PROMPT } = require('./prompts');
 const { generateQuickQueryResponse, generateDetailedPlanConversation, fetchLocalDataMock } = require('./services');
@@ -8,7 +10,12 @@ const { generateQuickQueryResponse, generateDetailedPlanConversation, fetchLocal
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 
 const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
@@ -232,6 +239,12 @@ app.post('/api/call', async (req, res) => {
 });
 
 
-app.listen(PORT, () => {
-    console.log(`AgriSpark server running on port ${PORT}`);
-});
+// Conditional listen for local development, export for Vercel
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`AgriSpark server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;
+
