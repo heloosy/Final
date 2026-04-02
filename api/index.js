@@ -12,12 +12,9 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// Serve static files from the root 'public' directory
+// Static files still served for local development
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
-});
 
 
 
