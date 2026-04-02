@@ -1,0 +1,95 @@
+const { GoogleGenAI } = require('@google/genai');
+const { MASTER_PROMPT } = require('./prompts');
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }); 
+
+async function generateQuickQueryResponse(query, lang) {
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-lite',
+            contents: `The user has called for a quick query. User query: "${query}". Respond highly concisely in ${lang === 'th-TH' ? 'Thai' : 'English'} suitable for Voice IVR. Internalize your confidence score.`,
+            config: { systemInstruction: MASTER_PROMPT, temperature: 0.7 }
+        });
+        return response.text;
+    } catch (e) {
+        console.error("LLM Quick Query Error:", e);
+        return lang === 'th-TH' ? 'ระบบมีปัญหา' : 'System error.';
+    }
+}
+
+async function generateDetailedPlanConversation(params, recentUtterance, lang) {
+    try {
+        let progressContext = `CURRENT COLLECTED DATA:\n${JSON.stringify(params, null, 2)}\n`;
+        const contentStr = `
+MODE 2: Detailed Planning.
+${progressContext}
+
+The user just explicitly said: "${recentUtterance}".
+
+Identify if any new information was shared (Name, Location, Past Crop, Current Idea, Soil, Terrain). Update the JSON parameters.
+
+When you have collected all 6 pieces of data, also generate the following fields for the PDF:
+- "marketInsight": A professional strategy based on crop and location.
+- "costStrategy": A specific tip to reduce input costs (fertilizers, etc).
+- "laborForecast": Dates for upcoming labor needs.
+- "climateResilience": Specific mitigation advice based on injected data.
+
+Then, generate your natural, human-like response in ${lang === 'th-TH' ? 'Thai' : 'English'}.
+
+Output your response in valid JSON format ONLY:
+{
+  "message": "your conversational response string here",
+  "updatedParams": { "name": "...", "location": "...", "pastCrop": "...", "currentIdea": "...", "soil": "...", "terrain": "...", "marketInsight": "...", "costStrategy": "...", "laborForecast": "...", "climateResilience": "..." }
+}
+`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-lite',
+            contents: contentStr,
+            config: { 
+                systemInstruction: MASTER_PROMPT, 
+                temperature: 0.7,
+                responseMimeType: "application/json"
+            }
+        });
+        
+        const result = JSON.parse(response.text);
+        return result;
+    } catch (e) {
+         console.error("LLM Detailed Plan Error:", e);
+         return { message: 'System error.', updatedParams: params };
+    }
+}
+
+async function generateVisionDiagnostic(textMsg, hasMedia, lang) {
+    try {
+        const promptParams = hasMedia 
+            ? `[IMAGE DIAGNOSTICS REQUEST]. The user attached a photo of their crop. User text: "${textMsg}". Respond with a professional visual diagnostic and report findings alongside your Confidence Score in ${lang === 'th-TH' ? 'Thai' : 'English'}.`
+            : `[STANDARD TEXT REQUEST]. The user asked: "${textMsg}". Answer in a highly structured, professional format in ${lang === 'th-TH' ? 'Thai' : 'English'}.`;
+            
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-lite',
+            contents: promptParams,
+            config: { systemInstruction: MASTER_PROMPT, temperature: 0.8 }
+        });
+        return response.text;
+    } catch (e) {
+        console.error("LLM Vision Error:", e);
+        return 'System Error analyzing input.';
+    }
+}
+
+async function fetchLocalDataMock(location) {
+    await new Promise(r => setTimeout(r, 1200));
+    return {
+        weather: "Partly cloudy, 28°C. Expected heavy rainfall arriving in 48 hours.",
+        satellite_agronomy: "NDVI 0.65 (moderate vigor). Soil moisture index is slightly deficient."
+    };
+}
+
+module.exports = {
+    generateQuickQueryResponse,
+    generateDetailedPlanConversation,
+    generateVisionDiagnostic,
+    fetchLocalDataMock
+};
