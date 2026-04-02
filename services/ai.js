@@ -38,7 +38,7 @@ FORMATTING:
 - WHATSAPP: Bold *Headers:*, bullets •, clear spacing.
 `;
 
-const modelName = 'gemini-3.1-flash-lite-preview';
+const modelName = 'gemini-1.5-flash';
 
 async function getQuickResponse(userQuery, language = 'english') {
   try {
