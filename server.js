@@ -8,6 +8,10 @@ const { generateQuickQueryResponse, generateDetailedPlanConversation, fetchLocal
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(express.static('public'));
+
+const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
 
 const PORT = process.env.PORT || 3000;
 
@@ -204,6 +208,29 @@ app.post('/whatsapp/chat', async (req, res) => {
     res.type('text/xml');
     res.send(twiml.toString());
 });
+
+// ============================================
+// API ROUTES FOR FRONTEND
+// ============================================
+
+app.post('/api/call', async (req, res) => {
+    const { phoneNumber } = req.body;
+    if (!phoneNumber) return res.status(400).json({ success: false, error: 'Phone number required.' });
+
+    try {
+        const call = await client.calls.create({
+            url: `${process.env.VERCEL_URL || 'http://localhost:3000'}/voice/entry`,
+            to: phoneNumber,
+            from: process.env.TWILIO_PHONE_NUMBER
+        });
+        console.log(`Initiated call to ${phoneNumber}, Sid: ${call.sid}`);
+        res.json({ success: true, callSid: call.sid });
+    } catch (error) {
+        console.error('Twilio Call Error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 
 app.listen(PORT, () => {
     console.log(`AgriSpark server running on port ${PORT}`);
