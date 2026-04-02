@@ -1,11 +1,14 @@
 const { GoogleGenAI } = require('@google/genai');
 const { MASTER_PROMPT } = require('./prompts');
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }); 
+const apiKey = process.env.GEMINI_API_KEY;
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 async function generateQuickQueryResponse(query, lang) {
+    if (!ai) return lang === 'th-TH' ? 'ระบบไม่พร้อมใช้งาน - กรุณาตรวจสอบ API key' : 'AI not initialized. Check GEMINI_API_KEY.';
     try {
         const response = await ai.models.generateContent({
+
             model: 'gemini-1.5-flash',
             contents: `The user has called for a quick query. User query: "${query}". Respond highly concisely in ${lang === 'th-TH' ? 'Thai' : 'English'} suitable for Voice IVR. Internalize your confidence score.`,
             config: { systemInstruction: MASTER_PROMPT, temperature: 0.7 }
@@ -18,6 +21,7 @@ async function generateQuickQueryResponse(query, lang) {
 }
 
 async function generateDetailedPlanConversation(params, recentUtterance, lang) {
+    if (!ai) return { message: lang === 'th-TH' ? 'ระบบไม่พร้อมใช้งาน' : 'AI not initialized.', updatedParams: params };
     try {
         let progressContext = `CURRENT COLLECTED DATA:\n${JSON.stringify(params, null, 2)}\n`;
         const contentStr = `
@@ -62,6 +66,7 @@ Output your response in valid JSON format ONLY:
 }
 
 async function generateVisionDiagnostic(textMsg, hasMedia, lang) {
+    if (!ai) return lang === 'th-TH' ? 'ระบบไม่พร้อมใช้งาน' : 'AI not initialized.';
     try {
         const promptParams = hasMedia 
             ? `[IMAGE DIAGNOSTICS REQUEST]. The user attached a photo of their crop. User text: "${textMsg}". Respond with a professional visual diagnostic and report findings alongside your Confidence Score in ${lang === 'th-TH' ? 'Thai' : 'English'}.`
