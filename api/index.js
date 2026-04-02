@@ -5,18 +5,20 @@ const twilio = require('twilio');
 
 const bodyParser = require('body-parser');
 const { MASTER_PROMPT } = require('../prompts');
-const { generateQuickQueryResponse, generateDetailedPlanConversation, fetchLocalDataMock } = require('../services');
+const { generateQuickQueryResponse, generateDetailedPlanConversation, generateVisionDiagnostic, fetchLocalDataMock } = require('../services');
+
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // Serve static files from the root 'public' directory
-app.use(express.static(path.join(process.cwd(), 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
+
 
 
 const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
